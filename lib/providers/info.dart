@@ -137,8 +137,19 @@ class Info with ChangeNotifier {
     });
   }
 
-  void edit(int day, String id, String title, String description,
-      TimeOfDay startTime, TimeOfDay endTime) {
+  Future<void> edit(int day, String id, String title, String description,
+      TimeOfDay startTime, TimeOfDay endTime) async {
+    final _url = url + 'timetable/' + _days[day - 1] + '/$id.json';
+    await http.patch(
+      _url,
+      body: json.encode({
+        'title': title,
+        'description': description,
+        'endTime': endTime.hour.toString() + ':' + endTime.minute.toString(),
+        'startTime':
+            startTime.hour.toString() + ':' + startTime.minute.toString(),
+      }),
+    );
     _information[day]
             [_information[day].indexWhere((element) => element.id == id)] =
         InfoItem(

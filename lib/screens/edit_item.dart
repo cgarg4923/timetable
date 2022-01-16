@@ -75,8 +75,7 @@ class _EditItemState extends State<EditItem> {
 
   void _saveForm(int days) {
     _form.currentState.save();
-    print(_editableInfo.startTime);
-    print(_editableInfo.endTime);
+
     Provider.of<Info>(context, listen: false).edit(
       days,
       _editableInfo.id,
