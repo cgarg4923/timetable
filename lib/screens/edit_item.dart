@@ -13,9 +13,8 @@ class EditItem extends StatefulWidget {
 class _EditItemState extends State<EditItem> {
   final _form = GlobalKey<FormState>();
   final _descriptionFocusNode = FocusNode();
-
-  TimeOfDay selectedStartTime = TimeOfDay.now();
-  TimeOfDay selectedEndTime = TimeOfDay.now();
+  int day;
+  bool _initValue = false;
   var _editableInfo = InfoItem(
     id: DateTime.now().toString(),
     title: '',
@@ -24,71 +23,88 @@ class _EditItemState extends State<EditItem> {
     endTime: TimeOfDay.now(),
   );
 
-  Future<void> _selectStartTime(
-      BuildContext context, InfoItem _currentInfo) async {
+  Future<void> _selectStartTime(BuildContext context) async {
     final TimeOfDay pickedS = await showTimePicker(
-        context: context,
-        initialTime: _currentInfo.startTime,
-        builder: (BuildContext context, Widget child) {
-          return MediaQuery(
-            data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: false),
-            child: child,
-          );
-        });
-
-    if (pickedS != null && pickedS != selectedStartTime)
-      setState(() {
-        selectedStartTime = pickedS;
-        _editableInfo = InfoItem(
-          id: _currentInfo.id,
-          title: _editableInfo.title,
-          description: _editableInfo.description,
-          startTime: selectedStartTime,
-          endTime: _editableInfo.endTime,
+      context: context,
+      initialTime: _editableInfo.startTime,
+      builder: (BuildContext context, Widget child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: false),
+          child: child,
         );
-      });
+      },
+    );
+    if (pickedS != null && pickedS != _editableInfo.startTime)
+      setState(
+        () {
+          _editableInfo = InfoItem(
+            id: _editableInfo.id,
+            title: _editableInfo.title,
+            description: _editableInfo.description,
+            startTime: pickedS,
+            endTime: _editableInfo.endTime,
+          );
+        },
+      );
   }
 
-  Future<void> _selectEndTime(
-      BuildContext context, InfoItem _currentInfo) async {
+  Future<void> _selectEndTime(BuildContext context) async {
     final TimeOfDay pickedS = await showTimePicker(
-        context: context,
-        initialTime: _currentInfo.endTime,
-        builder: (BuildContext context, Widget child) {
-          return MediaQuery(
-            data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: false),
-            child: child,
-          );
-        });
-
-    if (pickedS != null && pickedS != selectedEndTime)
-      setState(() {
-        selectedEndTime = pickedS;
-        _editableInfo = InfoItem(
-          id: _currentInfo.id,
-          title: _editableInfo.title,
-          description: _editableInfo.description,
-          startTime: selectedStartTime,
-          endTime: selectedEndTime,
+      context: context,
+      initialTime: _editableInfo.endTime,
+      builder: (BuildContext context, Widget child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: false),
+          child: child,
         );
-      });
+      },
+    );
+    if (pickedS != null && pickedS != _editableInfo.endTime)
+      setState(
+        () {
+          _editableInfo = InfoItem(
+            id: _editableInfo.id,
+            title: _editableInfo.title,
+            description: _editableInfo.description,
+            startTime: _editableInfo.startTime,
+            endTime: pickedS,
+          );
+        },
+      );
   }
 
-  void _saveForm(int day) {
+  void _saveForm(int days) {
     _form.currentState.save();
-    print(_editableInfo.title);
-    print(_editableInfo.description);
     print(_editableInfo.startTime);
     print(_editableInfo.endTime);
-
     Provider.of<Info>(context, listen: false).edit(
-      day,
+      days,
       _editableInfo.id,
       _editableInfo.title,
       _editableInfo.description,
       _editableInfo.startTime,
       _editableInfo.endTime,
     );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  void didChangeDependencies() {
+    if (!_initValue) {
+      final List args = ModalRoute.of(context).settings.arguments as List;
+      final _currentInfo = Provider.of<Info>(context, listen: false)
+          .getSingleInfo(args[0], args[1]);
+      setState(() {
+        _editableInfo = _currentInfo;
+        day = args[0];
+      });
+    }
+    _initValue = true;
+    super.didChangeDependencies();
   }
 
   @override
@@ -99,17 +115,14 @@ class _EditItemState extends State<EditItem> {
 
   @override
   Widget build(BuildContext context) {
-    final List args = ModalRoute.of(context).settings.arguments as List;
-    final _currentInfo = Provider.of<Info>(context, listen: false)
-        .getSingleInfo(args[0], args[1]);
     return Scaffold(
       appBar: AppBar(
-        title: Text('Add New Slot'),
+        title: Text('Edit Slot'),
         actions: [
           IconButton(
             icon: Icon(Icons.check),
             onPressed: () {
-              _saveForm(args[0]);
+              _saveForm(day);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text('Slot Added Successfully!'),
@@ -122,6 +135,7 @@ class _EditItemState extends State<EditItem> {
       ),
       body: Form(
         key: _form,
+        autovalidateMode: AutovalidateMode.always,
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Column(
@@ -133,7 +147,7 @@ class _EditItemState extends State<EditItem> {
                     hintText: 'Title',
                     border: OutlineInputBorder(),
                   ),
-                  initialValue: _currentInfo.title,
+                  initialValue: _editableInfo.title,
                   textInputAction: TextInputAction.next,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -146,7 +160,7 @@ class _EditItemState extends State<EditItem> {
                   },
                   onSaved: (value) {
                     _editableInfo = InfoItem(
-                      id: _currentInfo.id,
+                      id: _editableInfo.id,
                       title: value,
                       description: _editableInfo.description,
                       startTime: _editableInfo.startTime,
@@ -158,7 +172,7 @@ class _EditItemState extends State<EditItem> {
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: TextFormField(
-                  initialValue: _currentInfo.description,
+                  initialValue: _editableInfo.description,
                   decoration: const InputDecoration(
                     hintText: 'Description',
                     border: OutlineInputBorder(),
@@ -177,7 +191,7 @@ class _EditItemState extends State<EditItem> {
                   },
                   onSaved: (value) {
                     _editableInfo = InfoItem(
-                      id: _currentInfo.id,
+                      id: _editableInfo.id,
                       title: _editableInfo.title,
                       description: value,
                       startTime: _editableInfo.startTime,
@@ -195,11 +209,11 @@ class _EditItemState extends State<EditItem> {
                         child: ListTile(
                           title: Text(
                             MaterialLocalizations.of(context)
-                                .formatTimeOfDay(_currentInfo.startTime),
+                                .formatTimeOfDay(_editableInfo.startTime),
                           ),
                           subtitle: Text('starts'),
                           onTap: () {
-                            _selectStartTime(context, _currentInfo);
+                            _selectStartTime(context);
                           },
                         ),
                       ),
@@ -209,11 +223,11 @@ class _EditItemState extends State<EditItem> {
                         child: ListTile(
                           title: Text(
                             MaterialLocalizations.of(context)
-                                .formatTimeOfDay(_currentInfo.endTime),
+                                .formatTimeOfDay(_editableInfo.endTime),
                           ),
                           subtitle: Text('ends'),
                           onTap: () {
-                            _selectEndTime(context, _currentInfo);
+                            _selectEndTime(context);
                           },
                         ),
                       ),
@@ -223,7 +237,7 @@ class _EditItemState extends State<EditItem> {
               ),
               ElevatedButton(
                 onPressed: () {
-                  _saveForm(args[0]);
+                  _saveForm(day);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('Slot Editted Successfully!'),

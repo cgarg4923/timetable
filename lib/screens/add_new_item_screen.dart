@@ -135,6 +135,7 @@ class _AddNewItemState extends State<AddNewItem> {
             )
           : Form(
               key: _form,
+              autovalidateMode: AutovalidateMode.always,
               child: Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Column(
@@ -176,7 +177,7 @@ class _AddNewItemState extends State<AddNewItem> {
                           border: OutlineInputBorder(),
                         ),
                         maxLines: 3,
-                        textInputAction: TextInputAction.done,
+                        textInputAction: TextInputAction.newline,
                         focusNode: _descriptionFocusNode,
                         validator: (value) {
                           if (value.length > 200) {
