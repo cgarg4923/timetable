@@ -118,11 +118,15 @@ class _InfoItemState extends State<InfoItem> {
               ),
             ),
             if (_expanded)
-              Container(
-                height: 70,
+              Card(
+                elevation: 0,
                 child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: ListView(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 8,
+                    horizontal: 15,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Text(
                         MaterialLocalizations.of(context)
