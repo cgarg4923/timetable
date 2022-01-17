@@ -5,7 +5,6 @@ import '../widgets/info_item.dart';
 import '../widgets/app_drawer.dart';
 import '../providers/info.dart' show Info;
 import 'add_new_item_screen.dart';
-import '../providers/change_day.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -32,18 +31,19 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void didChangeDependencies() {
-    if (_initValue) Provider.of<Info>(context).fetchAndSetTimeTable();
+    if (_initValue)
+      Provider.of<Info>(context, listen: false).fetchAndSetTimeTable();
     _initValue = false;
     super.didChangeDependencies();
   }
 
   @override
   Widget build(BuildContext context) {
-    final _selectedDay = Provider.of<ChangeDay>(context);
-    final _information = Provider.of<Info>(context).getInfo(_selectedDay.day);
+    final _info = Provider.of<Info>(context);
+    final _information = _info.getInfo(_info.day);
     return Scaffold(
       appBar: AppBar(
-        title: Text(weekDays[_selectedDay.day]),
+        title: Text(weekDays[_info.day]),
         actions: [
           IconButton(
             icon: Icon(Icons.add),
@@ -51,7 +51,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Navigator.pushNamed(
                 context,
                 AddNewItem.routeName,
-                arguments: _selectedDay.day,
+                arguments: _info.day,
               );
             },
           ),
@@ -63,11 +63,13 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       drawer: AppDrawer(),
       body: _information == null
-          ? Center(child: CircularProgressIndicator())
+          ? Center(
+              child: CircularProgressIndicator(),
+            )
           : ListView.builder(
               itemCount: _information.length == null ? 0 : _information.length,
               itemBuilder: (_, i) => InfoItem(
-                day: _selectedDay.day,
+                day: _info.day,
                 id: _information[i].id,
                 title: _information[i].title,
                 info: _information[i].description,

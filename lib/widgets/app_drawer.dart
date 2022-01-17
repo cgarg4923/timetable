@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../providers/change_day.dart';
+import '../providers/info.dart';
 
 class AppDrawer extends StatelessWidget {
   final List<String> days = [
@@ -15,7 +15,7 @@ class AppDrawer extends StatelessWidget {
   ];
   @override
   Widget build(BuildContext context) {
-    final _changeDay = Provider.of<ChangeDay>(context, listen: false);
+    final _changeDay = Provider.of<Info>(context, listen: false);
     return Drawer(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,

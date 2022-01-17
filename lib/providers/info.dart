@@ -30,6 +30,19 @@ class InfoItem {
 
 class Info with ChangeNotifier {
   final Map<int, List<InfoItem>> _information = {};
+  int _selectedDay;
+  Info() {
+    _selectedDay = DateTime.now().weekday;
+  }
+  int get day {
+    return _selectedDay;
+  }
+
+  void changeDay(int day) {
+    _selectedDay = day;
+    notifyListeners();
+  }
+
   final List<String> weekDays = [
     'Monday.json',
     'Tuesday.json',
@@ -165,7 +178,21 @@ class Info with ChangeNotifier {
   }
 
   void delete(int day, String id) {
-    _information[day].removeWhere((element) => element.id == id);
+    final int existingInfoIndex =
+        _information[day].indexWhere((element) => element.id == id);
+    var existingInfo = _information[day][existingInfoIndex];
+    _information[day].removeAt(existingInfoIndex);
     notifyListeners();
+    final _url = url + '/timetable/' + _days[day - 1] + '/$id.json';
+    http.delete(_url).then(
+      (_) {
+        existingInfo = null;
+      },
+    ).catchError(
+      (error) {
+        _information[day].insert(existingInfoIndex, existingInfo);
+        notifyListeners();
+      },
+    );
   }
 }

@@ -14,6 +14,7 @@ class _EditItemState extends State<EditItem> {
   final _form = GlobalKey<FormState>();
   final _descriptionFocusNode = FocusNode();
   int day;
+  bool _isLoaded = true;
   bool _initValue = false;
   var _editableInfo = InfoItem(
     id: DateTime.now().toString(),
@@ -73,16 +74,33 @@ class _EditItemState extends State<EditItem> {
       );
   }
 
-  void _saveForm(int days) {
+  void _saveForm(int days) async {
     _form.currentState.save();
-
-    Provider.of<Info>(context, listen: false).edit(
+    await Provider.of<Info>(context, listen: false)
+        .edit(
       days,
       _editableInfo.id,
       _editableInfo.title,
       _editableInfo.description,
       _editableInfo.startTime,
       _editableInfo.endTime,
+    )
+        .catchError(
+      (error) {
+        print(error);
+      },
+    ).then(
+      (value) {
+        setState(() {
+          _isLoaded = true;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Slot Editted Successfully!'),
+          ),
+        );
+        Navigator.of(context).pop();
+      },
     );
   }
 
@@ -122,134 +140,130 @@ class _EditItemState extends State<EditItem> {
             icon: Icon(Icons.check),
             onPressed: () {
               _saveForm(day);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Slot Added Successfully!'),
-                ),
-              );
-              Navigator.of(context).pop();
             },
           ),
         ],
       ),
-      body: Form(
-        key: _form,
-        autovalidateMode: AutovalidateMode.always,
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Column(
-            children: [
-              Padding(
+      body: !_isLoaded
+          ? Center(
+              child: CircularProgressIndicator(),
+            )
+          : Form(
+              key: _form,
+              autovalidateMode: AutovalidateMode.always,
+              child: Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: TextFormField(
-                  decoration: const InputDecoration(
-                    hintText: 'Title',
-                    border: OutlineInputBorder(),
-                  ),
-                  initialValue: _editableInfo.title,
-                  textInputAction: TextInputAction.next,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter some text';
-                    }
-                    return null;
-                  },
-                  onFieldSubmitted: (value) {
-                    FocusScope.of(context).requestFocus(_descriptionFocusNode);
-                  },
-                  onSaved: (value) {
-                    _editableInfo = InfoItem(
-                      id: _editableInfo.id,
-                      title: value,
-                      description: _editableInfo.description,
-                      startTime: _editableInfo.startTime,
-                      endTime: _editableInfo.endTime,
-                    );
-                  },
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: TextFormField(
-                  initialValue: _editableInfo.description,
-                  decoration: const InputDecoration(
-                    hintText: 'Description',
-                    border: OutlineInputBorder(),
-                  ),
-                  maxLines: 3,
-                  textInputAction: TextInputAction.done,
-                  focusNode: _descriptionFocusNode,
-                  validator: (value) {
-                    if (value.length > 200) {
-                      return 'Maximum Word Limit Exceeded';
-                    }
-                    return null;
-                  },
-                  onFieldSubmitted: (value) {
-                    FocusManager.instance.primaryFocus?.unfocus();
-                  },
-                  onSaved: (value) {
-                    _editableInfo = InfoItem(
-                      id: _editableInfo.id,
-                      title: _editableInfo.title,
-                      description: value,
-                      startTime: _editableInfo.startTime,
-                      endTime: _editableInfo.endTime,
-                    );
-                  },
-                ),
-              ),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 4),
-                child: Row(
+                child: Column(
                   children: [
-                    Expanded(
-                      child: Card(
-                        child: ListTile(
-                          title: Text(
-                            MaterialLocalizations.of(context)
-                                .formatTimeOfDay(_editableInfo.startTime),
-                          ),
-                          subtitle: Text('starts'),
-                          onTap: () {
-                            _selectStartTime(context);
-                          },
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: TextFormField(
+                        decoration: const InputDecoration(
+                          hintText: 'Title',
+                          border: OutlineInputBorder(),
                         ),
+                        initialValue: _editableInfo.title,
+                        textInputAction: TextInputAction.next,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter some text';
+                          }
+                          return null;
+                        },
+                        onFieldSubmitted: (value) {
+                          FocusScope.of(context)
+                              .requestFocus(_descriptionFocusNode);
+                        },
+                        onSaved: (value) {
+                          _editableInfo = InfoItem(
+                            id: _editableInfo.id,
+                            title: value,
+                            description: _editableInfo.description,
+                            startTime: _editableInfo.startTime,
+                            endTime: _editableInfo.endTime,
+                          );
+                        },
                       ),
                     ),
-                    Expanded(
-                      child: Card(
-                        child: ListTile(
-                          title: Text(
-                            MaterialLocalizations.of(context)
-                                .formatTimeOfDay(_editableInfo.endTime),
-                          ),
-                          subtitle: Text('ends'),
-                          onTap: () {
-                            _selectEndTime(context);
-                          },
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: TextFormField(
+                        initialValue: _editableInfo.description,
+                        decoration: const InputDecoration(
+                          hintText: 'Description',
+                          border: OutlineInputBorder(),
                         ),
+                        maxLines: 3,
+                        textInputAction: TextInputAction.done,
+                        focusNode: _descriptionFocusNode,
+                        validator: (value) {
+                          if (value.length > 200) {
+                            return 'Maximum Word Limit Exceeded';
+                          }
+                          return null;
+                        },
+                        onFieldSubmitted: (value) {
+                          FocusManager.instance.primaryFocus?.unfocus();
+                        },
+                        onSaved: (value) {
+                          _editableInfo = InfoItem(
+                            id: _editableInfo.id,
+                            title: _editableInfo.title,
+                            description: value,
+                            startTime: _editableInfo.startTime,
+                            endTime: _editableInfo.endTime,
+                          );
+                        },
                       ),
+                    ),
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 4),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Card(
+                              child: ListTile(
+                                title: Text(
+                                  MaterialLocalizations.of(context)
+                                      .formatTimeOfDay(_editableInfo.startTime),
+                                ),
+                                subtitle: Text('starts'),
+                                onTap: () {
+                                  _selectStartTime(context);
+                                },
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: Card(
+                              child: ListTile(
+                                title: Text(
+                                  MaterialLocalizations.of(context)
+                                      .formatTimeOfDay(_editableInfo.endTime),
+                                ),
+                                subtitle: Text('ends'),
+                                onTap: () {
+                                  _selectEndTime(context);
+                                },
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          _isLoaded = false;
+                        });
+                        _saveForm(day);
+                      },
+                      child: Text('Save'),
                     ),
                   ],
                 ),
               ),
-              ElevatedButton(
-                onPressed: () {
-                  _saveForm(day);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Slot Editted Successfully!'),
-                    ),
-                  );
-                  Navigator.of(context).pop();
-                },
-                child: Text('Save'),
-              ),
-            ],
-          ),
-        ),
-      ),
+            ),
     );
   }
 }

@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import './screens/home_screen.dart';
 import './providers/info.dart';
 import 'screens/add_new_item_screen.dart';
-import './providers/change_day.dart';
 import './screens/edit_item.dart';
 
 void main() {
@@ -18,9 +17,6 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(
           create: (_) => Info(),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => ChangeDay(),
         ),
       ],
       child: MaterialApp(
